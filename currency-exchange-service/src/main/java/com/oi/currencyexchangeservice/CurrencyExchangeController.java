@@ -7,9 +7,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 @RestController
 public class CurrencyExchangeController {
+
+  @Autowired
+  private CurrencyExchangeRepository repository;
 
   @Autowired
   private Environment environment;
@@ -18,10 +22,15 @@ public class CurrencyExchangeController {
   public CurrencyExchange retrieveExchangeValue(
           @PathVariable String from,
           @PathVariable String to) {
-    CurrencyExchange currencyExchange = new CurrencyExchange(1000L, from, to, BigDecimal.valueOf(50));
+    CurrencyExchange currencyExchange =
+            repository.findByFromAndTo(from, to);
+
+    if (currencyExchange == null) {
+      throw new RuntimeException("Currency Exchange with" + from + " and " + to + "values not found");
+    }
+
     String port = environment.getProperty("local.server.port");
     currencyExchange.setEnvironment(port);
-
     return currencyExchange;
   }
 }
