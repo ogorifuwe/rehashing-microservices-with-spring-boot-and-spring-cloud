@@ -1,7 +1,6 @@
 package com.oi.currencyconversionservice;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,7 +15,7 @@ import java.util.Map;
 public class CurrencyConversionController {
 
   @Autowired
-  private Environment environment;
+  private CurrencyExchangeProxy proxy;
 
   @GetMapping(value = "/currency-conversion/from/{from}/to/{to}/quantity/{quantity}")
   public CurrencyConversion calculateCurrencyConversion(
@@ -24,7 +23,6 @@ public class CurrencyConversionController {
           @PathVariable String to,
           @PathVariable BigDecimal quantity) {
 
-    String port = environment.getProperty("local.server.port");
     Map<String, String> uriVariables = new HashMap<>();
     uriVariables.put("from", from);
     uriVariables.put("to", to);
@@ -46,7 +44,27 @@ public class CurrencyConversionController {
                     quantity,
                     currencyConversionDTO.getConversionMultiple(),
                     quantity.multiply(currencyConversionDTO.getConversionMultiple()),
-                    currencyConversionDTO.getEnvironment());
+                    currencyConversionDTO.getEnvironment() + " rest template");
+    return currencyConversion;
+  }
+
+  @GetMapping(value = "/currency-conversion-feign/from/{from}/to/{to}/quantity/{quantity}")
+  public CurrencyConversion calculateCurrencyConversionFeign(
+          @PathVariable String from,
+          @PathVariable String to,
+          @PathVariable BigDecimal quantity) {
+
+    CurrencyConversion currencyConversionDTO = proxy.retrieveExchangeValue(from, to);
+    currencyConversionDTO.toString();
+    CurrencyConversion currencyConversion =
+            new CurrencyConversion(
+                    currencyConversionDTO.getId(),
+                    from,
+                    to,
+                    quantity,
+                    currencyConversionDTO.getConversionMultiple(),
+                    quantity.multiply(currencyConversionDTO.getConversionMultiple()),
+                    currencyConversionDTO.getEnvironment() + " feign");
     return currencyConversion;
   }
 }
