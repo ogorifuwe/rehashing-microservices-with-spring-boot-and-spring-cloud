@@ -1,7 +1,16 @@
 plugins {
-	id 'org.springframework.boot' version '2.5.6'
+	id 'org.springframework.boot' version '2.4.12'
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
 	id 'java'
+	id 'com.palantir.docker' version '0.22.1'
+}
+
+jar {
+	manifest {
+		attributes(
+				'Main-Class':'com.oi.currencyexchangeservice.CurrencyExchangeServiceApplication'
+		)
+	}
 }
 
 group = 'com.oi'
@@ -20,6 +29,14 @@ repositories {
 
 ext {
 	set('springCloudVersion', "2020.0.4")
+}
+
+docker {
+	name "${project.name}"
+	dockerfile file('src/docker/Dockerfile')
+	copySpec.from(jar).rename(".*", "currency_exchange_app.jar")
+	buildArgs(['CURRENCY_EXCHANGE_JAR_FILE': "currency_exchange_app.jar"])
+	pull true
 }
 
 dependencies {
